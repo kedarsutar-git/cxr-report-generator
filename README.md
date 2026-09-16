@@ -476,9 +476,9 @@ If you use this project in your research, please cite:
 ```bibtex
 @software{cxr_report_generator_2026,
   title  = {CXR Report Generator: Automated Radiology Report Generation from Chest X-Rays},
-  author = {Your Name},
+  author = {Kedar Sutar},
   year   = {2026},
-  url    = {https://github.com/yourusername/cxr-report-generator}
+  url    = {https://github.com/kedarsutar-git/cxr-report-generator}
 }
 ```
 
@@ -503,7 +503,7 @@ from the use of this software.
 
 **Your Name**
 - GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+- Email: kedar.sutar400@gmail.com
 - LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
 
 ---

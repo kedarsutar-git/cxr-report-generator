@@ -504,7 +504,7 @@ from the use of this software.
 **Your Name**
 - GitHub: [@kedarsutar-git](https://github.com/kedarsutar-git)
 - Email: kedarsutar37@gmail.com
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
+- LinkedIn: [Kedar Sutar](https://www.linkedin.com/in/kedar-sutar/)
 
 ---
 

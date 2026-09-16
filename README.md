@@ -499,18 +499,12 @@ from the use of this software.
 
 ---
 
-## 📬 Contact
+## 📬 Contact 
 
 **Your Name**
-<<<<<<< HEAD
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: kedar.sutar400@gmail.com
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
-=======
 - GitHub: [@kedarsutar-git](https://github.com/kedarsutar-git)
 - Email: kedarsutar37@gmail.com
 - LinkedIn: [Kedar Sutar](https://www.linkedin.com/in/kedar-sutar/)
->>>>>>> 605632af603ec2ce3f9c13e1ffff97249d6778b2
 
 ---
 

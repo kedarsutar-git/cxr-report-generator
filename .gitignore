@@ -1,0 +1,208 @@
+# ============================================================
+# CXR REPORT GENERATOR — .gitignore
+# ============================================================
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ------------------------------------------------------------
+# Virtual Environments
+# ------------------------------------------------------------
+.venv/
+venv/
+ENV/
+env/
+.conda/
+.env
+
+# ------------------------------------------------------------
+# PyTorch / Model Weights (large files)
+# ------------------------------------------------------------
+backend/weights/*.pt
+backend/weights/*.pth
+backend/weights/*.ckpt
+backend/weights/*.safetensors
+backend/weights/*.bin
+backend/weights/*.onnx
+*.h5
+
+# Keep the placeholder
+!backend/weights/.gitkeep
+
+# ------------------------------------------------------------
+# Dataset (large — do not commit)
+# ------------------------------------------------------------
+Data/
+data/
+*.csv
+*.dcm
+*.dicom
+*.nii
+*.nii.gz
+
+# Keep data folder structure but not files
+!Data/**/.gitkeep
+
+# ------------------------------------------------------------
+# HuggingFace Cache
+# ------------------------------------------------------------
+.cache/
+huggingface/
+~/.cache/huggingface/
+
+# ------------------------------------------------------------
+# Training Outputs
+# ------------------------------------------------------------
+training/outputs/
+training/runs/
+training/checkpoints/
+training/logs/
+*.log
+runs/
+wandb/
+tensorboard/
+
+# ------------------------------------------------------------
+# Node / Frontend
+# ------------------------------------------------------------
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Vite
+frontend/dist/
+frontend/.vite/
+
+# ------------------------------------------------------------
+# Environment / Secrets
+# ------------------------------------------------------------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.json
+config.local.json
+
+# ------------------------------------------------------------
+# IDE / Editor
+# ------------------------------------------------------------
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+.vscode-test/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ------------------------------------------------------------
+# Operating System
+# ------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# Logs & Temp
+# ------------------------------------------------------------
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+
+# ------------------------------------------------------------
+# Test / Coverage
+# ------------------------------------------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+nosetests.xml
+coverage.xml
+
+# ------------------------------------------------------------
+# MyPy / Ruff
+# ------------------------------------------------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ------------------------------------------------------------
+# Docker
+# ------------------------------------------------------------
+docker-compose.override.yml
+.docker/
+
+# ------------------------------------------------------------
+# Misc
+# ------------------------------------------------------------
+*.bak
+*.orig
+*.rej
+.~*
+*.tar.gz
+*.zip
+
+# ------------------------------------------------------------
+# Project-specific
+# ------------------------------------------------------------
+# Screenshots (if too large)
+docs/screenshots/*.png
+docs/screenshots/*.jpg
+
+# Local test images
+test-images/
+uploads/
+outputs/
+
+# Notes
+TODO.md
+notes/
+personal/

@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-ink-900 text-slate-100 font-sans antialiased;
+  background-image:
+    radial-gradient(60rem 60rem at 10% -10%, rgba(13,132,255,.18), transparent 60%),
+    radial-gradient(50rem 50rem at 110% 10%, rgba(124,192,255,.12), transparent 55%);
+}
+
+.glass {
+  @apply bg-white/[0.04] border border-white/10 backdrop-blur-xl;
+}

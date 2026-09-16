@@ -502,8 +502,8 @@ from the use of this software.
 ## 📬 Contact
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
+- GitHub: [@kedarsutar-git](https://github.com/kedarsutar-git)
+- Email: kedarsutar37@gmail.com
 - LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
 
 ---

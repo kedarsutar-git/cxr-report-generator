@@ -93,9 +93,12 @@ class CXRReportModel(nn.Module):
         pixel_values,
         tokenizer,
         max_new_tokens: int = 180,
-        num_beams: int = 1,
-        repetition_penalty: float = 1.25,
-        no_repeat_ngram_size: int = 4,
+        num_beams: int = 1,                       # ignored when do_sample=True
+        repetition_penalty: float = 1.15,         # lowered for sampling
+        no_repeat_ngram_size: int = 3,            # loosened for variety
+        temperature: float = 0.75,                # NEW
+        top_p: float = 0.92,                      # NEW
+        top_k: int = 50,                          # NEW
     ) -> str:
         self.eval()
         vis, bos, pooled = self._visual_prefix(pixel_values)
@@ -109,22 +112,24 @@ class CXRReportModel(nn.Module):
 
         inputs_embeds = torch.cat([vis, bos, prompt_embeds], dim=1)
 
-        # ---- Generate with explicit EOS so BioGPT doesn't stop immediately ----
+        # ---- Sampling generation: produces varied text per image ----
         out = self.llm.generate(
             inputs_embeds=inputs_embeds,
             max_new_tokens=max_new_tokens,
-            num_beams=num_beams,
+            do_sample=True,                     # ← FIX 1a: enable sampling
+            temperature=temperature,            # ← FIX 1b: mild randomness
+            top_p=top_p,                        # ← FIX 1c: nucleus sampling
+            top_k=top_k,                        # ← FIX 1d: top-k filter
             repetition_penalty=repetition_penalty,
             no_repeat_ngram_size=no_repeat_ngram_size,
-            early_stopping=True,
-            eos_token_id=tokenizer.eos_token_id,     # only </s>, not <s>
+            eos_token_id=tokenizer.eos_token_id,
             pad_token_id=tokenizer.pad_token_id,
         )
 
-        # `out` contains only the newly generated tokens (no input prefix)
+        # `out` contains only the newly generated tokens
         text = tokenizer.decode(out[0], skip_special_tokens=True)
 
-        # Re-prepend "Findings:" so the split_report can find the header
+        # Re-prepend "Findings:" so split_report can find the header
         if not text.strip().lower().startswith("findings"):
             text = "Findings: " + text.strip()
 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torchvision.models as tvm
-from transformers import GPT2LMHeadModel
+from transformers import AutoModelForCausalLM as GPT2LMHeadModel
 
 CHEXPERT_LABELS = [
     "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass",
@@ -36,7 +36,7 @@ class VisualEncoder(nn.Module):
 class CXRReportModel(nn.Module):
     def __init__(
         self,
-        lm_name: str = "gpt2",
+        lm_name: str = "microsoft/biogpt",
         embed_dim: int = 768,
         num_chexpert: int = 14,
         pretrained_vision: bool = True,
@@ -45,12 +45,16 @@ class CXRReportModel(nn.Module):
         self.vision = VisualEncoder(embed_dim, pretrained_vision)
         self.llm = GPT2LMHeadModel.from_pretrained(lm_name)
 
-        lm_dim = self.llm.config.n_embd
+        # BioGPT uses hidden_size, GPT-2 uses n_embd
+        lm_dim = getattr(self.llm.config, "hidden_size", None) \
+                 or getattr(self.llm.config, "n_embd", None)
+
         self.vis_to_lm = nn.Linear(embed_dim, lm_dim) if embed_dim != lm_dim else nn.Identity()
 
         self.img_bos = nn.Parameter(torch.zeros(1, 1, lm_dim))
         nn.init.trunc_normal_(self.img_bos, std=0.02)
 
+        # cls_head operates on RAW vision features (embed_dim = 768)
         self.cls_head = nn.Sequential(
             nn.Linear(embed_dim, 256), nn.GELU(), nn.Dropout(0.2),
             nn.Linear(256, num_chexpert),
@@ -59,10 +63,11 @@ class CXRReportModel(nn.Module):
         self.num_visual_tokens = 49
 
     def _visual_prefix(self, pixel_values):
-        vis = self.vision(pixel_values)
-        vis = self.vis_to_lm(vis)
+        vis_raw = self.vision(pixel_values)          # (B, 49, 768)
+        vis = self.vis_to_lm(vis_raw)                # (B, 49, 1024) for BioGPT
         bos = self.img_bos.expand(vis.size(0), -1, -1)
-        return vis, bos, vis.mean(dim=1)
+        pooled = vis_raw.mean(dim=1)                 # (B, 768) ← matches cls_head
+        return vis, bos, pooled
 
     def forward(self, pixel_values, input_ids, attention_mask, labels=None):
         vis, bos, pooled = self._visual_prefix(pixel_values)
@@ -88,14 +93,23 @@ class CXRReportModel(nn.Module):
         pixel_values,
         tokenizer,
         max_new_tokens: int = 180,
-        num_beams: int = 4,
-        repetition_penalty: float = 1.15,
-        no_repeat_ngram_size: int = 3,
+        num_beams: int = 1,
+        repetition_penalty: float = 1.25,
+        no_repeat_ngram_size: int = 4,
     ) -> str:
         self.eval()
         vis, bos, pooled = self._visual_prefix(pixel_values)
-        inputs_embeds = torch.cat([vis, bos], dim=1)
 
+        # ---- Text prompt: gives BioGPT direction to continue ----
+        prompt_text = "Findings:"
+        prompt_ids = tokenizer(
+            prompt_text, return_tensors="pt", add_special_tokens=False
+        ).input_ids.to(pixel_values.device)
+        prompt_embeds = self.llm.get_input_embeddings()(prompt_ids)
+
+        inputs_embeds = torch.cat([vis, bos, prompt_embeds], dim=1)
+
+        # ---- Generate with explicit EOS so BioGPT doesn't stop immediately ----
         out = self.llm.generate(
             inputs_embeds=inputs_embeds,
             max_new_tokens=max_new_tokens,
@@ -103,9 +117,16 @@ class CXRReportModel(nn.Module):
             repetition_penalty=repetition_penalty,
             no_repeat_ngram_size=no_repeat_ngram_size,
             early_stopping=True,
-            eos_token_id=tokenizer.eos_token_id,
+            eos_token_id=tokenizer.eos_token_id,     # only </s>, not <s>
             pad_token_id=tokenizer.pad_token_id,
         )
+
+        # `out` contains only the newly generated tokens (no input prefix)
         text = tokenizer.decode(out[0], skip_special_tokens=True)
+
+        # Re-prepend "Findings:" so the split_report can find the header
+        if not text.strip().lower().startswith("findings"):
+            text = "Findings: " + text.strip()
+
         probs = torch.sigmoid(pooled)[0].cpu().numpy()
         return text, probs

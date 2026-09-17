@@ -2,6 +2,7 @@
 train.py
 6 GB VRAM optimised training for CXR report generation.
 
+Uses BioGPT (microsoft/biogpt) as the language model backbone.
 Run from training/ folder:
     python train.py
 """
@@ -26,26 +27,27 @@ from dataset import CXRReportDataset
 
 
 # ------------------------------------------------------------------
-# TRAINING CONFIG (tuned for RTX 3050 6GB)
+# TRAINING CONFIG (tuned for RTX 3050 6GB + BioGPT 347M)
 # ------------------------------------------------------------------
 DEFAULTS = {
     "train_ann": "../Data/iu_xray/annotations/train.json",
     "val_ann": "../Data/iu_xray/annotations/val.json",
     "image_root": "../Data/iu_xray/images",
     "out": "../backend/weights/best.pt",
-    "lm_name": "gpt2",
+    "lm_name": "microsoft/biogpt",   # ← CHANGED from "gpt2"
     "epochs": 12,
-    "bs": 2,                   # physical batch size (small for 6GB)
-    "grad_accum": 8,           # effective batch = 2 x 8 = 16
+    "bs": 1,                          # BioGPT is bigger → bs=1
+    "grad_accum": 16,                 # effective batch = 16
     "max_len": 200,
-    "lr_vision": 3e-4,         # was 5e-5  (6x higher, forces vision to learn)
-    "lr_lm": 1e-4,             # was 2e-4  (lower, LM shouldn't dominate)
-    "lambda_cls": 1.0,         # was 0.3   (3x stronger, forces image-aware labels)
+    "lr_vision": 3e-4,
+    "lr_lm": 1e-4,
+    "lambda_cls": 1.0,
     "workers": 2,
     "lora": True,
     "amp": True,
     "grad_checkpoint": True,
 }
+
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -58,7 +60,7 @@ def parse_args():
 
 
 def build_lora(model):
-    """Apply LoRA to GPT-2 attention layers -- trains ~1M params instead of 124M."""
+    """Apply LoRA to BioGPT attention layers."""
     try:
         from peft import LoraConfig, get_peft_model
     except ImportError:
@@ -69,7 +71,7 @@ def build_lora(model):
         r=16,
         lora_alpha=32,
         lora_dropout=0.05,
-        target_modules=["c_attn"],
+        target_modules=["q_proj", "v_proj"],   # ← BioGPT module names
         bias="none",
         task_type="CAUSAL_LM",
     )

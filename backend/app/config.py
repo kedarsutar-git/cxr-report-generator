@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    lm_name: str = "gpt2"
+    lm_name: str = "microsoft/biogpt"
     weights_path: str = "weights/best_merged.pt"
     max_new_tokens: int = 180
     num_beams: int = 4

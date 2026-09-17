@@ -1,7 +1,7 @@
 import time
 from pathlib import Path
 import torch
-from transformers import GPT2Tokenizer
+from transformers import AutoTokenizer
 
 from .config import settings
 from .model.architecture import CXRReportModel, CHEXPERT_LABELS
@@ -12,7 +12,7 @@ from .postprocess import split_report
 class ReportService:
     def __init__(self):
         self.device = self._resolve_device()
-        self.tokenizer = GPT2Tokenizer.from_pretrained(settings.lm_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(settings.lm_name)
         self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.model = CXRReportModel(lm_name=settings.lm_name)

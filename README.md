@@ -4,16 +4,17 @@
 
 ### Automated Radiology Report Generation from Chest X-Rays using Multimodal Deep Learning
 
-**DenseNet-121 Vision Encoder + Microsoft BioGPT · End-to-End Medical AI System**
+**DenseNet-121 Vision Encoder + Microsoft BioGPT · Full-Stack Medical AI System**
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
 [![BioGPT](https://img.shields.io/badge/Model-Microsoft%20BioGPT-00A4EF?style=for-the-badge&logo=microsoft&logoColor=white)](https://huggingface.co/microsoft/biogpt)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
+[![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[Overview](#-overview) · [Demo](#-demo) · [Architecture](#-architecture) · [Installation](#-installation) · [Training](#-training) · [Results](#-results) · [Roadmap](#-roadmap)
+[Overview](#-overview) · [Demo](#-demo) · [Architecture](#-architecture) · [Features](#-features) · [Installation](#-installation) · [Training](#-training) · [Results](#-results) · [Roadmap](#-roadmap)
 
 </div>
 
@@ -21,15 +22,18 @@
 
 ## 📖 Overview
 
-**CXR Report Generator** is a full-stack medical AI system that automatically generates structured radiology reports from chest X-ray images. It combines a **DenseNet-121 vision encoder** with a **fine-tuned Microsoft BioGPT** language model (347M parameters, pretrained on PubMed biomedical literature) to produce clinically meaningful findings and impressions.
+**CXR Report Generator** is a full-stack medical AI system that automatically generates structured radiology reports from chest X-ray images. It combines a **DenseNet-121 vision encoder** with a **fine-tuned Microsoft BioGPT** language model (347M parameters, pretrained on PubMed biomedical literature) to produce clinically coherent findings and impressions.
 
-The system is designed to be:
-- 🎯 **Accurate** — trained on the IU X-Ray dataset with balanced 50/50 sampling
-- 🧠 **Medically literate** — BioGPT's PubMed pretraining means it already understands medical vocabulary
-- ⚡ **Fast** — 2–5 second inference on consumer GPUs (RTX 3050, 6 GB VRAM)
-- 🎨 **Beautiful** — modern, clinical-grade UI built with React + Tailwind
-- 🔬 **Research-Ready** — modular architecture, easy to extend
-- 🚀 **Production-Friendly** — Docker-ready, RESTful API
+The system includes a **polished web interface** with animated aurora backgrounds, glassmorphic design, circular confidence gauges, tabbed report views, report history, and dark/light theme switching.
+
+### Highlights
+
+- 🎯 **Accurate** — trained on IU X-Ray with 50/50 balanced sampling
+- 🧠 **Medically literate** — BioGPT already understands medical vocabulary from PubMed
+- ⚡ **Fast** — 2–5 second inference on an RTX 3050 (6 GB VRAM)
+- 🎨 **Beautiful UI** — modern, clinical-grade React interface
+- 🔬 **Research-ready** — modular, reproducible, extensible
+- 🚀 **Production-friendly** — clean REST API, Docker-ready
 
 > ⚠️ **Disclaimer:** This is a **research prototype** and is **not a medical device**. All outputs must be reviewed by a qualified radiologist before any clinical use.
 
@@ -39,25 +43,25 @@ The system is designed to be:
 
 ### Sample Output
 
-**Input:** Chest X-Ray (PA view)
+**Input:** Chest X-ray (PA view)
 
 **Generated Findings:**
 > The cardiomediastinal silhouette is normal in size. There are no focal airspace opacities, pleural effusion or pneumothorax. No acute bony abnormalities.
 
 **Generated Impression:**
-> No acute cardiopulmonary abnormality identified. Cardiomegaly without evidence of active disease. Otherwise normal chest radiograph.
+> No acute cardiopulmonary abnormality identified. No definite pleural effusion or pneumothorax. No definitive evidence of a rib fracture or hemothorax noted in the prior imaging.
 
 ### Screenshots
 
 <div align="center">
 
-| Upload & Analyze | Report Generated |
+| Main Interface | Report Generated |
 |:---:|:---:|
-| ![Upload](docs/screenshots/upload.png) | ![Report](docs/screenshots/report.png) |
+| ![Main UI](docs/screenshots/main-ui.png) | ![Report](docs/screenshots/report.png) |
 
-| Pathologies Detected | Multiple X-Ray Tests |
+| Pathology Rings | History Sidebar |
 |:---:|:---:|
-| ![Pathologies](docs/screenshots/pathologies.png) | ![Variants](docs/screenshots/variants.png) |
+| ![Pathologies](docs/screenshots/pathologies.png) | ![History](docs/screenshots/history.png) |
 
 </div>
 
@@ -68,50 +72,54 @@ The system is designed to be:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        USER INTERFACE                           │
-│           React + Vite + Tailwind CSS  (localhost:5173)         │
-│   ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐    │
-│   │   Upload     │→ │   Preview    │→ │  Report Card       │    │
-│   │  (Drag/Drop) │  │   (Image)    │  │  (Findings + Tags) │    │
-│   └──────────────┘  └──────────────┘  └────────────────────┘    │
+│         React 18 + Vite + Tailwind CSS  (localhost:5173)        │
+│                                                                 │
+│   ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────┐   │
+│   │  TopBar    │  │  Sidebar   │  │ UploadZone │  │Toasts   │   │
+│   │ (theme,AI) │  │ (history)  │  │ (dragdrop) │  │         │   │
+│   └────────────┘  └────────────┘  └────────────┘  └─────────┘   │
+│                                                                 │
+│   ┌──────────────────────────────────────────────────────────┐  │
+│   │   ReportView · Tabbed · Confidence Rings · Copy/DL       │  │
+│   └──────────────────────────────────────────────────────────┘  │
 └──────────────────────────┬──────────────────────────────────────┘
                            │  POST /api/v1/predict
                            │  (multipart/form-data)
 ┌──────────────────────────▼──────────────────────────────────────┐
-│                       FASTAPI BACKEND                           │
-│                    (localhost:8000)                             │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │  1. Validate → 2. Preprocess → 3. Inference → 4. Post   │   │
-│   └─────────────────────────────────────────────────────────┘   │
+│                      FASTAPI BACKEND                            │
+│                     (localhost:8000)                            │
+│                                                                 │
+│   1. Validate  →  2. Preprocess  →  3. Infer  →  4. Post        │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────────┐
-│                      MULTIMODAL MODEL                           │
+│                     MULTIMODAL MODEL                            │
 │                                                                 │
-│   ┌────────────────┐         ┌─────────────────────────────┐    │
-│   │  DenseNet-121  │         │      BioGPT (347M)          │    │
-│   │  (ImageNet)    │         │   PubMed-pretrained         │    │
-│   └────────┬───────┘         └──────────────┬──────────────┘    │
-│            │ 49 × 768 visual tokens         │                   │
-│            ▼                                │                   │
-│   ┌─────────────────────┐                   │                   │
-│   │  Vision → LM        │                   │                   │
-│   │  Projection (768→1024)                  │                   │
-│   └──────────┬──────────┘                   │                   │
-│              │  + learnable [IMG_BOS]        │                   │
+│   ┌────────────────┐             ┌─────────────────────────┐    │
+│   │  DenseNet-121  │             │    Microsoft BioGPT     │    │
+│   │  (ImageNet)    │             │   (347M, PubMed)        │    │
+│   └────────┬───────┘             └────────────┬────────────┘    │
+│            │ 49 × 768 visual tokens           │                 │
+│            ▼                                  │                 │
+│   ┌───────────────────────┐                   │                 │
+│   │ Vision → LM Projection│                   │                 │
+│   │      768 → 1024       │                   │                 │
+│   └──────────┬────────────┘                   │                 │
+│              │  + learnable [IMG_BOS]          │                 │
+│              │  + text prompt "Findings:"      │                 │
+│              └──────────────┬─────────────────┘                 │
+│                             ▼                                   │
+│              ┌──────────────────────────────┐                   │
+│              │  Sampling Generation         │                   │
+│              │  (T=0.75, top_p=0.92, top_k=50)                 │
 │              └──────────────┬───────────────┘                   │
 │                             ▼                                   │
-│              ┌─────────────────────────────┐                    │
-│              │  "Findings:" prompt         │                    │
-│              │  → Sampling Generation      │                    │
-│              │  (T=0.75, top_p=0.92)       │                    │
-│              └──────────────┬──────────────┘                    │
-│                             ▼                                   │
-│              ┌─────────────────────────────┐                    │
-│              │  Radiology Report Text      │                    │
-│              └─────────────────────────────┘                    │
+│              ┌──────────────────────────────┐                   │
+│              │  Radiology Report Text       │                   │
+│              └──────────────────────────────┘                   │
 │                                                                 │
 │   ┌──────────────────────────────┐                              │
-│   │  CheXpert Classifier (14)    │  ← Multi-task auxiliary loss │
+│   │  CheXpert Classifier (14)    │ ← Multi-task auxiliary loss   │
 │   └──────────────────────────────┘                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -120,30 +128,43 @@ The system is designed to be:
 
 | Component | Choice | Rationale |
 |---|---|---|
-| **Vision Backbone** | DenseNet-121 | Battle-tested CXR backbone (CheXNet lineage) |
-| **Language Model** | Microsoft BioGPT (347M) | PubMed-pretrained → knows medical vocabulary out of the box |
-| **Fine-tuning** | LoRA (r=16, α=32) | Trains only 0.45% of params — fits on 6 GB VRAM |
+| **Vision Backbone** | DenseNet-121 (ImageNet) | Battle-tested CXR backbone (CheXNet lineage) |
+| **Language Model** | Microsoft BioGPT (347M) | PubMed-pretrained → knows medical terms out of the box |
+| **Fine-tuning** | LoRA (r=16, α=32) | Trains only 0.45% of params, fits on 6 GB VRAM |
 | **LoRA Targets** | `q_proj`, `v_proj` | BioGPT attention module names |
-| **Visual Prefix** | 49 soft tokens + `img_bos` | No custom cross-attention needed |
-| **Text Prompt** | `"Findings:"` prefix | Anchors BioGPT generation, prevents empty output |
-| **Multi-task** | CheXpert head (λ=1.0) | Forces vision encoder to learn clinically meaningful features |
-| **Class Balance** | 50/50 abnormal/normal | Prevents "mode collapse" to majority class |
+| **Visual Prefix** | 49 soft tokens + `img_bos` | No custom cross-attention architecture needed |
+| **Text Prompt** | `"Findings:"` prefix | Anchors BioGPT to avoid empty outputs |
+| **Multi-task Loss** | CheXpert head, λ=1.0 | Forces the encoder to learn clinically meaningful features |
+| **Class Balance** | 50/50 abnormal / normal | Prevents mode collapse to the majority class |
 | **Generation** | Sampling (T=0.75, top_p=0.92) | Produces varied, natural reports per image |
 
 ---
 
 ## ✨ Features
 
-- 🖼️ **Drag-and-Drop Upload** — Preview X-ray inline before analysis
-- ⚡ **Real-Time Inference** — 2–5 seconds per report on RTX 3050
-- 📝 **Structured Reports** — Findings + Impression, split automatically
-- 🏷️ **14 CheXpert Pathologies** — Probability scores with color-coded bars
-- 🧹 **Robust Postprocessing** — Removes `XXXX` anonymization tokens, deduplicates sentences, truncates impressions
-- 📥 **Export Options** — Copy to clipboard, download as `.txt`
-- 🎨 **Clinical UI** — Dark theme, glassmorphism, smooth animations
-- 🔌 **REST API** — Clean OpenAPI / Swagger endpoints
+### 🎨 Frontend
+
+- 🌌 **Animated Aurora Background** — slowly drifting cyan + indigo gradient blobs
+- 💎 **Glassmorphic Design** — frosted translucent cards with subtle borders
+- 📜 **Report History Sidebar** — browse past analyses (stored in `localStorage`)
+- 🌓 **Dark / Light Theme Toggle** — persisted to `localStorage`
+- 🗂️ **Tabbed Report View** — Findings · Impression · Raw JSON
+- 📊 **Circular Confidence Rings** — SVG gauges with color coding (cyan / amber / rose)
+- 🔔 **Toast Notifications** — success / error / info popups
+- 🦴 **Skeleton Loaders** — shimmer placeholders during inference
+- ⌨️ **Keyboard Shortcut** — `Ctrl + Enter` to generate
+- 🎬 **Scanning Animation** — glowing scanline moves across uploaded X-ray
+- 📥 **Export** — copy to clipboard or download as `.txt`
+- 📱 **Fully Responsive** — mobile / tablet / desktop
+
+### 🧠 Backend & Model
+
+- 🖼️ **REST API** with `/api/v1/predict` and `/api/v1/health`
+- 🎯 **14 CheXpert Pathologies** with color-coded confidence scores
+- 🧹 **Robust Postprocessing** — removes `XXXX` anonymization tokens, deduplicates sentences, truncates impressions
+- ⚡ **Fast Inference** — 2–5 seconds on consumer GPU
 - 🔬 **Full Training Pipeline** — CSV → balanced JSON → LoRA training → merge → serve
-- 📊 **Data Pipeline** — IU X-Ray CSV → balanced JSON annotations in one command
+- 🚀 **Docker-Ready** architecture
 
 ---
 
@@ -170,9 +191,10 @@ cd cxr-report-generator
 ```bash
 # Create and activate virtual environment
 python -m venv .venv
+
 # Windows:
 .\.venv\Scripts\Activate.ps1
-# Linux/Mac:
+# Linux / Mac:
 source .venv/bin/activate
 
 # Install dependencies
@@ -233,12 +255,13 @@ npm run dev
 
 ### Open the App
 
-Navigate to **http://localhost:5173** (or 5174 if port is busy)
+Navigate to **http://localhost:5173** (or `5174` if the port is busy).
 
 1. Drag & drop a chest X-ray (PNG or JPEG)
-2. Click **Generate Report**
-3. View findings, impression, and pathology scores
-4. Copy or download the report
+2. Click **Generate Report** (or press `Ctrl + Enter`)
+3. Switch between **Findings**, **Impression**, and **Raw JSON** tabs
+4. Review the circular pathology gauges
+5. Copy or download the report
 
 ### API Usage
 
@@ -266,11 +289,11 @@ Response:
 
 ## 🧠 Training
 
-### Dataset: IU X-Ray
+### Dataset: IU X-Ray (Indiana University)
 
 - **3,851** de-identified radiology reports
-- **7,470** chest X-ray images
-- Download: [Kaggle — IU X-Ray](https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university)
+- **7,470** chest X-ray images (frontal + lateral views)
+- Download: [Kaggle — Chest X-Rays Indiana University](https://www.kaggle.com/datasets/raddar/chest-xrays-indiana-university)
 
 ### Data Preparation
 
@@ -289,16 +312,17 @@ Run the data pipeline:
 python training/prepare_data.py
 ```
 
-This produces:
+This script:
 - **Removes** `XXXX` anonymization tokens from reports
-- **Extracts** 14 CheXpert labels via keyword matching (with negation awareness)
-- **Balances** to 50/50 abnormal/normal to prevent mode collapse
+- **Extracts** 14 CheXpert labels via negation-aware keyword matching
+- **Balances** to 50/50 abnormal / normal to prevent mode collapse
 
+Output:
 ```
 Data/iu_xray/annotations/
-├── train.json  (~1850 records)
-├── val.json    (~264 records)
-└── test.json   (~530 records)
+├── train.json   (~1850 records)
+├── val.json     (~264 records)
+└── test.json    (~530 records)
 ```
 
 ### Train the Model
@@ -371,7 +395,7 @@ python train.py
 
 | Model | Best Val Loss | Report Quality |
 |---|---|---|
-| GPT-2 (124M) | 2.05 | Good but repetitive |
+| GPT-2 (124M) | 2.05 | Repetitive, templated |
 | **BioGPT (347M)** | **1.77** | ✅ Natural medical text |
 
 **Improvement: 13.4% lower validation loss.**
@@ -404,40 +428,49 @@ Tested on 4 different X-rays — all 4 findings **completely different**:
 ```
 cxr-report-generator/
 │
-├── backend/                          # FastAPI service
+├── backend/                              # FastAPI service
 │   ├── app/
-│   │   ├── main.py                   # API endpoints
-│   │   ├── config.py                 # Settings
-│   │   ├── schemas.py                # Pydantic models
-│   │   ├── inference.py              # Model service
-│   │   ├── postprocess.py            # Report cleaning & splitting
+│   │   ├── main.py                       # API endpoints
+│   │   ├── config.py                     # Settings
+│   │   ├── schemas.py                    # Pydantic models
+│   │   ├── inference.py                  # Model service
+│   │   ├── postprocess.py                # Report cleaning & splitting
 │   │   └── model/
-│   │       ├── architecture.py       # CXRReportModel (DenseNet-121 + BioGPT)
-│   │       └── preprocess.py         # Image transforms
-│   ├── weights/                      # Trained checkpoints (gitignored)
+│   │       ├── architecture.py           # CXRReportModel (DenseNet-121 + BioGPT)
+│   │       └── preprocess.py             # Image transforms
+│   ├── weights/                          # Trained checkpoints (gitignored)
+│   │   ├── best.pt                       # LoRA checkpoint
+│   │   ├── best_merged.pt                # Merged model (used by backend)
+│   │   └── .gitkeep
 │   └── requirements.txt
 │
-├── frontend/                         # React + Vite UI
+├── frontend/                             # React + Vite UI
 │   ├── src/
-│   │   ├── App.jsx
-│   │   ├── api.js
-│   │   ├── index.css
+│   │   ├── App.jsx                       # Main app + keyboard shortcuts
+│   │   ├── main.jsx
+│   │   ├── api.js                        # Fetch + history helpers
+│   │   ├── index.css                     # Aurora theme
 │   │   └── components/
-│   │       ├── UploadCard.jsx
-│   │       ├── ReportCard.jsx
-│   │       └── Loader.jsx
+│   │       ├── TopBar.jsx                # Header + theme toggle
+│   │       ├── Sidebar.jsx               # Report history
+│   │       ├── UploadZone.jsx            # Drag-drop upload
+│   │       ├── ReportView.jsx            # Tabbed report card
+│   │       ├── ConfidenceRing.jsx        # Circular gauge
+│   │       ├── Loader.jsx                # Skeleton loader
+│   │       └── Toasts.jsx                # Toast notifications
+│   ├── index.html
 │   ├── package.json
 │   ├── vite.config.js
 │   ├── tailwind.config.js
-│   └── index.html
+│   └── postcss.config.js
 │
-├── training/                         # Training pipeline
-│   ├── prepare_data.py               # CSV → balanced JSON
-│   ├── dataset.py                    # PyTorch Dataset
-│   ├── train.py                      # 6 GB VRAM-optimized training
-│   └── merge_lora.py                 # LoRA → base merge
+├── training/                             # Training pipeline
+│   ├── prepare_data.py                   # CSV → balanced JSON
+│   ├── dataset.py                        # PyTorch Dataset
+│   ├── train.py                          # 6 GB VRAM-optimized training
+│   └── merge_lora.py                     # LoRA → base merge
 │
-├── Data/                             # Dataset (gitignored)
+├── Data/                                 # Dataset (gitignored)
 │   └── iu_xray/
 │       ├── images/
 │       ├── indiana_reports.csv
@@ -447,7 +480,8 @@ cxr-report-generator/
 │           ├── val.json
 │           └── test.json
 │
-├── docs/                             # Screenshots, diagrams
+├── docs/
+│   └── screenshots/
 ├── README.md
 ├── LICENSE
 └── .gitignore
@@ -461,7 +495,7 @@ cxr-report-generator/
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18 · Vite · Tailwind CSS · Fetch API |
+| **Frontend** | React 18 · Vite · Tailwind CSS · SVG gauges · LocalStorage |
 | **Backend** | FastAPI · Uvicorn · Pydantic · Python-Multipart |
 | **ML / DL** | PyTorch 2.14 · torchvision · HuggingFace Transformers · PEFT (LoRA) |
 | **Base Models** | DenseNet-121 (ImageNet) · Microsoft BioGPT (PubMed) |
@@ -480,10 +514,13 @@ cxr-report-generator/
 - [x] LoRA fine-tuning on 6 GB VRAM
 - [x] `XXXX` token cleaning + impression truncation
 - [x] Sampling generation (mode collapse fix)
-- [ ] Train longer (20 epochs) for smoother output
+- [x] Advanced UI — aurora background, glassmorphism
+- [x] Tabbed report view + circular confidence gauges
+- [x] Report history sidebar + theme toggle + toasts
 - [ ] Grad-CAM attention heatmaps
 - [ ] Streaming token output (SSE)
-- [ ] Report history with SQLite
+- [ ] Report export as PDF
+- [ ] Train longer (20 epochs) for smoother output
 - [ ] MIMIC-CXR training (377k images)
 - [ ] Docker Compose deployment
 - [ ] BLEU-4 / ROUGE-L evaluation suite
@@ -501,7 +538,7 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing`)
 5. Open a Pull Request
 
-Please ensure your code follows **PEP 8** for Python and **Prettier** for JS/JSX.
+Please follow **PEP 8** for Python and **Prettier** for JS/JSX.
 
 ---
 
@@ -565,7 +602,7 @@ from the use of this software.
 
 ### ⭐ If this project helped you, consider giving it a star!
 
-**Built with ❤️ using PyTorch, BioGPT, FastAPI, and React**
+**Built with ❤️ using PyTorch, BioGPT, FastAPI, React, and Tailwind**
 
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=kedarsutar-git.cxr-report-generator)
 

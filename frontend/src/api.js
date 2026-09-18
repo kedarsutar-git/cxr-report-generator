@@ -5,11 +5,28 @@ export async function generateReport(file) {
   form.append('file', file);
 
   const res = await fetch(`${BASE}/api/v1/predict`, { method: 'POST', body: form });
+  const raw = await res.text();
 
   if (!res.ok) {
-    let msg = `Request failed (${res.status})`;
-    try { msg = (await res.json()).detail || msg; } catch {}
-    throw new Error(msg);
+    let detail = raw;
+    try { detail = JSON.parse(raw).detail || raw; } catch {}
+    throw new Error(detail);
   }
-  return res.json();
+  try { return JSON.parse(raw); }
+  catch { throw new Error(`Invalid JSON: ${raw.slice(0,200)}`); }
+}
+
+export function getHistory() {
+  try { return JSON.parse(localStorage.getItem('cxr_history') || '[]'); }
+  catch { return []; }
+}
+
+export function pushHistory(entry) {
+  const list = getHistory();
+  list.unshift({ ...entry, ts: Date.now() });
+  localStorage.setItem('cxr_history', JSON.stringify(list.slice(0, 20)));
+}
+
+export function clearHistory() {
+  localStorage.removeItem('cxr_history');
 }

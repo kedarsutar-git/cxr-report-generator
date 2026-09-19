@@ -62,6 +62,9 @@ class CXRReportModel(nn.Module):
 
         self.num_visual_tokens = 49
 
+    # ==================================================================
+    # Core forward primitives
+    # ==================================================================
     def _visual_prefix(self, pixel_values):
         vis_raw = self.vision(pixel_values)          # (B, 49, 768)
         vis = self.vis_to_lm(vis_raw)                # (B, 49, 1024) for BioGPT
@@ -87,6 +90,59 @@ class CXRReportModel(nn.Module):
         logits_cls = self.cls_head(pooled)
         return out.loss, logits_cls, out.logits
 
+    # ==================================================================
+    # NEW: Grad-CAM — highlights regions the model focused on
+    # ==================================================================
+    def compute_gradcam(self, pixel_values):
+        """
+        Compute Grad-CAM over the 7x7 spatial grid of the vision encoder.
+        Uses the top CheXpert class as the target signal.
+
+        Returns:
+            numpy array of shape (7, 7), values normalized to [0, 1]
+        """
+        self.eval()
+
+        # We need gradients flowing to pixel_values -> vision encoder
+        pixel_values = pixel_values.clone().detach().requires_grad_(True)
+
+        # Forward pass through the vision encoder (WITH grad tracking)
+        vis_raw = self.vision(pixel_values)          # (B, 49, 768)
+        vis_raw.retain_grad()                        # keep the gradient
+
+        pooled = vis_raw.mean(dim=1)                 # (B, 768)
+        logits_cls = self.cls_head(pooled)           # (B, 14)
+
+        # Target = highest-scoring pathology for this image
+        target_score = logits_cls[0].max()
+
+        # Backward to get gradients on the visual features
+        self.zero_grad(set_to_none=True)
+        target_score.backward(retain_graph=False)
+
+        grads = vis_raw.grad                         # (B, 49, 768)
+        if grads is None:
+            raise RuntimeError("Grad-CAM failed: no gradients on vis_raw")
+
+        # Weight each spatial location by mean of its gradient
+        weights = grads.mean(dim=-1)                 # (B, 49)
+        cam = torch.relu(weights)[0]                 # (49,)
+
+        # Normalize to [0, 1]
+        cam = cam - cam.min()
+        cam = cam / (cam.max() + 1e-8)
+
+        # Reshape to 7x7
+        cam = cam.reshape(7, 7).detach().cpu().numpy()
+
+        # Clean up
+        self.zero_grad(set_to_none=True)
+
+        return cam
+
+    # ==================================================================
+    # Text generation (sampling, no grads)
+    # ==================================================================
     @torch.no_grad()
     def generate_report(
         self,
@@ -94,11 +150,11 @@ class CXRReportModel(nn.Module):
         tokenizer,
         max_new_tokens: int = 180,
         num_beams: int = 1,                       # ignored when do_sample=True
-        repetition_penalty: float = 1.15,         # lowered for sampling
-        no_repeat_ngram_size: int = 3,            # loosened for variety
-        temperature: float = 0.75,                # NEW
-        top_p: float = 0.92,                      # NEW
-        top_k: int = 50,                          # NEW
+        repetition_penalty: float = 1.15,
+        no_repeat_ngram_size: int = 3,
+        temperature: float = 0.75,
+        top_p: float = 0.92,
+        top_k: int = 50,
     ) -> str:
         self.eval()
         vis, bos, pooled = self._visual_prefix(pixel_values)
@@ -116,10 +172,10 @@ class CXRReportModel(nn.Module):
         out = self.llm.generate(
             inputs_embeds=inputs_embeds,
             max_new_tokens=max_new_tokens,
-            do_sample=True,                     # ← FIX 1a: enable sampling
-            temperature=temperature,            # ← FIX 1b: mild randomness
-            top_p=top_p,                        # ← FIX 1c: nucleus sampling
-            top_k=top_k,                        # ← FIX 1d: top-k filter
+            do_sample=True,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
             repetition_penalty=repetition_penalty,
             no_repeat_ngram_size=no_repeat_ngram_size,
             eos_token_id=tokenizer.eos_token_id,

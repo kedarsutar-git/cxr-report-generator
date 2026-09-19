@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class Finding(BaseModel):
     label: str
@@ -12,3 +12,4 @@ class ReportResponse(BaseModel):
     findings_tags: List[Finding]
     latency_ms: float
     model_version: str
+    heatmap: Optional[str] = None       # ← NEW

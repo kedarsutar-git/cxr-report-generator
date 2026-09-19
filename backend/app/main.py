@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from .config import settings
 from .schemas import ReportResponse
@@ -32,6 +33,9 @@ def health():
     return {"status": "ok"}
 
 
+# ======================================================================
+# Standard (non-streaming) prediction
+# ======================================================================
 @app.post("/api/v1/predict", response_model=ReportResponse)
 async def predict(file: UploadFile = File(...)):
     if file.content_type not in ALLOWED:
@@ -49,3 +53,30 @@ async def predict(file: UploadFile = File(...)):
         raise HTTPException(500, f"Inference failed: {e}")
 
     return result
+
+
+# ======================================================================
+# Streaming (SSE) prediction — tokens arrive as they generate
+# ======================================================================
+@app.post("/api/v1/predict-stream")
+async def predict_stream(file: UploadFile = File(...)):
+    if file.content_type not in ALLOWED:
+        raise HTTPException(415, f"Unsupported type: {file.content_type}. Use PNG/JPEG.")
+
+    data = await file.read()
+    if len(data) > MAX_BYTES:
+        raise HTTPException(413, "Image exceeds 10 MB.")
+    if len(data) == 0:
+        raise HTTPException(400, "Empty file.")
+
+    svc = get_service()
+
+    return StreamingResponse(
+        svc.predict_stream(data),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

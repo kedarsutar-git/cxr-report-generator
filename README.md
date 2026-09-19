@@ -24,7 +24,7 @@
 
 **CXR Report Generator** is a full-stack medical AI system that automatically generates structured radiology reports from chest X-ray images. It combines a **DenseNet-121 vision encoder** with a **fine-tuned Microsoft BioGPT** language model (347M parameters, pretrained on PubMed biomedical literature) to produce clinically coherent findings and impressions.
 
-The system includes a **polished web interface** with animated aurora backgrounds, glassmorphic design, circular confidence gauges, tabbed report views, report history, and dark/light theme switching.
+The system includes a **polished web interface** with an animated aurora background, glassmorphic design, circular confidence gauges, tabbed report views, report history, and dark/light theme switching.
 
 ### Highlights
 
@@ -46,7 +46,7 @@ The system includes a **polished web interface** with animated aurora background
 **Input:** Chest X-ray (PA view)
 
 **Generated Findings:**
-> The cardiomediastinal silhouette is normal in size. There are no focal airspace opacities, pleural effusion or pneumothorax. No acute bony abnormalities.
+> Heart size is normal. The lungs are clear. There is no pneumothorax or pleural effusion.
 
 **Generated Impression:**
 > No acute cardiopulmonary abnormality identified. No definite pleural effusion or pneumothorax. No definitive evidence of a rib fracture or hemothorax noted in the prior imaging.
@@ -55,13 +55,13 @@ The system includes a **polished web interface** with animated aurora background
 
 <div align="center">
 
-| Main Interface | Report Generated |
+| Main Interface | X-Ray Uploaded |
 |:---:|:---:|
-| ![Main UI](docs/screenshots/main-ui.png) | ![Report](docs/screenshots/report.png) |
+| ![Main UI](docs/screenshots/main-ui.png) | ![Upload](docs/screenshots/upload.png) |
 
-| Pathology Rings | History Sidebar |
-|:---:|:---:|
-| ![Pathologies](docs/screenshots/pathologies.png) | ![History](docs/screenshots/history.png) |
+| Generated Report |
+|:---:|
+| ![Report](docs/screenshots/report.png) |
 
 </div>
 
@@ -273,14 +273,14 @@ curl -X POST http://localhost:8000/api/v1/predict \
 Response:
 ```json
 {
-  "findings": "The cardiomediastinal silhouette is normal in size...",
+  "findings": "Heart size is normal. The lungs are clear...",
   "impression": "No acute cardiopulmonary abnormality identified...",
   "full_report": "Findings: ... Impression: ...",
   "findings_tags": [
-    {"label": "Infiltration", "probability": 0.772},
-    {"label": "Edema", "probability": 0.610}
+    {"label": "Infiltration", "probability": 0.741},
+    {"label": "Edema", "probability": 0.644}
   ],
-  "latency_ms": 2387.9,
+  "latency_ms": 5155.2,
   "model_version": "v1.0-ep11-merged"
 }
 ```
@@ -402,14 +402,14 @@ python train.py
 
 ### Qualitative Results
 
-Tested on 4 different X-rays — all 4 findings **completely different**:
+Tested on multiple X-rays — findings vary per image:
 
 | Image | Top-1 Pathology | Generated Findings (abbreviated) |
 |---|---|---|
-| 1 | Infiltration 70.8% | "Heart size and pulmonary vascularity are normal..." |
-| 2 | Edema 71.7% | "No focal consolidation, pneumothorax or pleural effusion..." |
-| 3 | Infiltration 77.6% | "The heart size is normal. There are no focal infiltrates..." |
-| 4 | Infiltration 77.2% | "The cardiomediastinal silhouette is normal in size..." |
+| 1 | Infiltration 74% | "Heart size is normal. The lungs are clear..." |
+| 2 | Edema 71% | "No focal consolidation, pneumothorax or pleural effusion..." |
+| 3 | Infiltration 77% | "The heart size is normal. There are no focal infiltrates..." |
+| 4 | Infiltration 77% | "The cardiomediastinal silhouette is normal in size..." |
 
 **No mode collapse. Image-aware generation. Clean medical vocabulary.**
 
@@ -482,6 +482,10 @@ cxr-report-generator/
 │
 ├── docs/
 │   └── screenshots/
+│       ├── main-ui.png
+│       ├── upload.png
+│       └── report.png
+│
 ├── README.md
 ├── LICENSE
 └── .gitignore

@@ -466,6 +466,39 @@ Tested on multiple X-rays — findings vary per image:
 
 ---
 
+## 🎯 Advanced Features in Detail
+
+### 🔴 Streaming (SSE)
+
+Instead of waiting 3–5 seconds for the full report, the model **streams tokens as they generate**. Uses `TextIteratorStreamer` from HuggingFace with a background thread, delivering tokens via Server-Sent Events.
+
+**Result:** Report feels 2× faster — users see progress immediately.
+
+### 📄 PDF Export
+
+Click **Download** to receive a professionally formatted PDF with:
+- Header with model version and latency
+- Embedded X-ray image
+- Formatted findings + impression
+- **Color-coded pathology bars** (rose / amber / cyan)
+- Medical disclaimer footer
+
+Uses `jsPDF` on the client — no backend overhead.
+
+### 🎨 Grad-CAM Heatmaps
+
+Backpropagates from the top-scoring CheXpert class to find which of the **49 spatial locations** (7×7 grid) influenced the prediction most.
+
+- **Red/orange** = high attention
+- **Yellow** = medium
+- **Blue** = low attention
+
+Overlay is generated with Matplotlib's `jet` colormap and blended with the original X-ray at 50% opacity.
+
+**Result:** Interpretability — users can see *where* the model looked.
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -572,9 +605,15 @@ cxr-report-generator/
 - [x] Advanced UI — aurora background, glassmorphism
 - [x] Tabbed report view + circular confidence gauges
 - [x] Report history sidebar + theme toggle + toasts
+<<<<<<< HEAD
 - [x] **Streaming token output (SSE)** 🆕
 - [x] **PDF report export** 🆕
 - [x] **Grad-CAM attention heatmaps** 🆕
+=======
+- [x] Streaming token output (SSE)
+- [x] PDF report export
+- [x] Grad-CAM attention heatmaps
+>>>>>>> bf00ade (docs: add streaming, heatmap screenshots and update report)
 
 ### 🚧 Planned
 
@@ -587,6 +626,7 @@ cxr-report-generator/
 - [ ] DICOM support
 - [ ] Multi-view fusion (PA + lateral)
 - [ ] Uncertainty quantification
+<<<<<<< HEAD
 
 ---
 
@@ -620,6 +660,8 @@ Backpropagates from the top-scoring CheXpert class to find which of the **49 spa
 Overlay is generated with Matplotlib's `jet` colormap and blended with the original X-ray at 50% opacity.
 
 **Result:** Interpretability — users can see *where* the model looked.
+=======
+>>>>>>> bf00ade (docs: add streaming, heatmap screenshots and update report)
 
 ---
 

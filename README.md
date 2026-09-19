@@ -24,16 +24,18 @@
 
 **CXR Report Generator** is a full-stack medical AI system that automatically generates structured radiology reports from chest X-ray images. It combines a **DenseNet-121 vision encoder** with a **fine-tuned Microsoft BioGPT** language model (347M parameters, pretrained on PubMed biomedical literature) to produce clinically coherent findings and impressions.
 
-The system includes a **polished web interface** with an animated aurora background, glassmorphic design, circular confidence gauges, tabbed report views, report history, and dark/light theme switching.
+The system includes a **polished web interface** with an animated aurora background, glassmorphic design, **Grad-CAM heatmaps**, **streaming (SSE) token output**, **PDF export**, circular confidence gauges, tabbed report views, report history, and dark/light theme switching.
 
 ### Highlights
 
 - 🎯 **Accurate** — trained on IU X-Ray with 50/50 balanced sampling
 - 🧠 **Medically literate** — BioGPT already understands medical vocabulary from PubMed
 - ⚡ **Fast** — 2–5 second inference on an RTX 3050 (6 GB VRAM)
+- 🔴 **Streaming output** — reports type out word-by-word via Server-Sent Events
+- 🎨 **Grad-CAM heatmaps** — visualize where the model focused
+- 📄 **PDF export** — professional formatted report with X-ray image
 - 🎨 **Beautiful UI** — modern, clinical-grade React interface
 - 🔬 **Research-ready** — modular, reproducible, extensible
-- 🚀 **Production-friendly** — clean REST API, Docker-ready
 
 > ⚠️ **Disclaimer:** This is a **research prototype** and is **not a medical device**. All outputs must be reviewed by a qualified radiologist before any clinical use.
 
@@ -46,10 +48,10 @@ The system includes a **polished web interface** with an animated aurora backgro
 **Input:** Chest X-ray (PA view)
 
 **Generated Findings:**
-> Heart size is normal. The lungs are clear. There is no pneumothorax or pleural effusion.
+> The heart is normal in size. No focal consolidation, pleural effusion or pneumothorax. There are calcified granulomas of the lung bases bilaterally.
 
 **Generated Impression:**
-> No acute cardiopulmonary abnormality identified. No definite pleural effusion or pneumothorax. No definitive evidence of a rib fracture or hemothorax noted in the prior imaging.
+> No acute cardiopulmonary abnormality. Cardiac and mediastinal findings within normal limits. Calcified granuloma of the lungs bilaterally.
 
 ### Screenshots
 
@@ -62,6 +64,10 @@ The system includes a **polished web interface** with an animated aurora backgro
 | Generated Report |
 |:---:|
 | ![Report](docs/screenshots/report.png) |
+
+| 🔴 Streaming Tokens | 🎨 Grad-CAM Heatmap |
+|:---:|:---:|
+| ![Streaming](docs/screenshots/streaming.png) | ![Heatmap](docs/screenshots/heatmap.png) |
 
 </div>
 
@@ -80,16 +86,19 @@ The system includes a **polished web interface** with an animated aurora backgro
 │   └────────────┘  └────────────┘  └────────────┘  └─────────┘   │
 │                                                                 │
 │   ┌──────────────────────────────────────────────────────────┐  │
-│   │   ReportView · Tabbed · Confidence Rings · Copy/DL       │  │
+│   │  ReportView · Tabbed (Findings/Impression/Heatmap/JSON)  │  │
+│   │  Confidence Rings · Copy · PDF Download · Streaming      │  │
 │   └──────────────────────────────────────────────────────────┘  │
 └──────────────────────────┬──────────────────────────────────────┘
                            │  POST /api/v1/predict
+                           │  POST /api/v1/predict-stream (SSE)
                            │  (multipart/form-data)
 ┌──────────────────────────▼──────────────────────────────────────┐
 │                      FASTAPI BACKEND                            │
 │                     (localhost:8000)                            │
 │                                                                 │
-│   1. Validate  →  2. Preprocess  →  3. Infer  →  4. Post        │
+│   Validate  →  Preprocess  →  Infer  →  Postprocess             │
+│              →  Grad-CAM  →  Return heatmap + report            │
 └──────────────────────────┬──────────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────────┐
@@ -120,7 +129,12 @@ The system includes a **polished web interface** with an animated aurora backgro
 │                                                                 │
 │   ┌──────────────────────────────┐                              │
 │   │  CheXpert Classifier (14)    │ ← Multi-task auxiliary loss   │
-│   └──────────────────────────────┘                              │
+│   └──────────────┬───────────────┘                              │
+│                  │                                              │
+│                  ▼  Grad-CAM backprop                           │
+│              ┌──────────────────────────────┐                   │
+│              │  7×7 Attention Heatmap       │                   │
+│              └──────────────────────────────┘                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -137,6 +151,8 @@ The system includes a **polished web interface** with an animated aurora backgro
 | **Multi-task Loss** | CheXpert head, λ=1.0 | Forces the encoder to learn clinically meaningful features |
 | **Class Balance** | 50/50 abnormal / normal | Prevents mode collapse to the majority class |
 | **Generation** | Sampling (T=0.75, top_p=0.92) | Produces varied, natural reports per image |
+| **Streaming** | `TextIteratorStreamer` + SSE | Token-by-token output, 2× perceived speed |
+| **Interpretability** | Grad-CAM on vision encoder | Highlights regions of high attention |
 
 ---
 
@@ -148,23 +164,27 @@ The system includes a **polished web interface** with an animated aurora backgro
 - 💎 **Glassmorphic Design** — frosted translucent cards with subtle borders
 - 📜 **Report History Sidebar** — browse past analyses (stored in `localStorage`)
 - 🌓 **Dark / Light Theme Toggle** — persisted to `localStorage`
-- 🗂️ **Tabbed Report View** — Findings · Impression · Raw JSON
+- 🗂️ **Tabbed Report View** — **Findings · Impression · Heatmap · Raw JSON**
 - 📊 **Circular Confidence Rings** — SVG gauges with color coding (cyan / amber / rose)
+- 🎨 **Grad-CAM Heatmap Viewer** — colored overlay with Low/Medium/High legend
+- 🔴 **Streaming Text Display** — report types out word-by-word with blinking cursor
+- 📄 **PDF Export** — professional report with X-ray + findings + color-coded bars
 - 🔔 **Toast Notifications** — success / error / info popups
 - 🦴 **Skeleton Loaders** — shimmer placeholders during inference
 - ⌨️ **Keyboard Shortcut** — `Ctrl + Enter` to generate
 - 🎬 **Scanning Animation** — glowing scanline moves across uploaded X-ray
-- 📥 **Export** — copy to clipboard or download as `.txt`
+- 📥 **Copy to Clipboard** — one-click copy of full report
 - 📱 **Fully Responsive** — mobile / tablet / desktop
 
 ### 🧠 Backend & Model
 
-- 🖼️ **REST API** with `/api/v1/predict` and `/api/v1/health`
+- 🖼️ **REST API** with `/api/v1/predict` and `/api/v1/predict-stream`
 - 🎯 **14 CheXpert Pathologies** with color-coded confidence scores
+- 🔴 **Server-Sent Events** — real-time streaming via `TextIteratorStreamer`
+- 🎨 **Grad-CAM** — gradient-weighted attention heatmap on 7×7 vision features
 - 🧹 **Robust Postprocessing** — removes `XXXX` anonymization tokens, deduplicates sentences, truncates impressions
 - ⚡ **Fast Inference** — 2–5 seconds on consumer GPU
 - 🔬 **Full Training Pipeline** — CSV → balanced JSON → LoRA training → merge → serve
-- 🚀 **Docker-Ready** architecture
 
 ---
 
@@ -203,6 +223,9 @@ python -m pip install -r backend/requirements.txt
 
 # BioGPT tokenizer dependencies (required)
 python -m pip install sacremoses sentencepiece protobuf
+
+# Grad-CAM visualization
+python -m pip install matplotlib
 ```
 
 **For GPU support (recommended):**
@@ -215,6 +238,7 @@ python -m pip install torch torchvision --index-url https://download.pytorch.org
 ```bash
 cd frontend
 npm install
+npm install jspdf
 cd ..
 ```
 
@@ -259,12 +283,15 @@ Navigate to **http://localhost:5173** (or `5174` if the port is busy).
 
 1. Drag & drop a chest X-ray (PNG or JPEG)
 2. Click **Generate Report** (or press `Ctrl + Enter`)
-3. Switch between **Findings**, **Impression**, and **Raw JSON** tabs
-4. Review the circular pathology gauges
-5. Copy or download the report
+3. **Watch the report stream in token-by-token**
+4. Switch between **Findings**, **Impression**, **Heatmap**, and **Raw JSON** tabs
+5. Review the **Grad-CAM heatmap** for model attention
+6. Review the circular pathology gauges
+7. **Copy** the report or **Download as PDF**
 
 ### API Usage
 
+**Standard (non-streaming):**
 ```bash
 curl -X POST http://localhost:8000/api/v1/predict \
      -F "file=@chest_xray.png"
@@ -273,16 +300,32 @@ curl -X POST http://localhost:8000/api/v1/predict \
 Response:
 ```json
 {
-  "findings": "Heart size is normal. The lungs are clear...",
-  "impression": "No acute cardiopulmonary abnormality identified...",
+  "findings": "The heart is normal in size. No focal consolidation...",
+  "impression": "No acute cardiopulmonary abnormality...",
   "full_report": "Findings: ... Impression: ...",
   "findings_tags": [
     {"label": "Infiltration", "probability": 0.741},
     {"label": "Edema", "probability": 0.644}
   ],
   "latency_ms": 5155.2,
-  "model_version": "v1.0-ep11-merged"
+  "model_version": "v1.0-ep11-merged",
+  "heatmap": "data:image/png;base64,iVBORw0KGgo..."
 }
+```
+
+**Streaming (SSE):**
+```bash
+curl -N -X POST http://localhost:8000/api/v1/predict-stream \
+     -F "file=@chest_xray.png"
+```
+
+Response (line-by-line):
+```
+data: {"token": "The"}
+data: {"token": " heart"}
+data: {"token": " is"}
+...
+data: {"done": true, "findings": "...", "impression": "...", "tags": [...], "heatmap": "..."}
 ```
 
 ---
@@ -406,7 +449,7 @@ Tested on multiple X-rays — findings vary per image:
 
 | Image | Top-1 Pathology | Generated Findings (abbreviated) |
 |---|---|---|
-| 1 | Infiltration 74% | "Heart size is normal. The lungs are clear..." |
+| 1 | Infiltration 74% | "The heart is normal in size. No focal consolidation..." |
 | 2 | Edema 71% | "No focal consolidation, pneumothorax or pleural effusion..." |
 | 3 | Infiltration 77% | "The heart size is normal. There are no focal infiltrates..." |
 | 4 | Infiltration 77% | "The cardiomediastinal silhouette is normal in size..." |
@@ -430,13 +473,14 @@ cxr-report-generator/
 │
 ├── backend/                              # FastAPI service
 │   ├── app/
-│   │   ├── main.py                       # API endpoints
+│   │   ├── main.py                       # API endpoints + SSE
 │   │   ├── config.py                     # Settings
 │   │   ├── schemas.py                    # Pydantic models
-│   │   ├── inference.py                  # Model service
+│   │   ├── inference.py                  # Model service + streaming + Grad-CAM
 │   │   ├── postprocess.py                # Report cleaning & splitting
 │   │   └── model/
-│   │       ├── architecture.py           # CXRReportModel (DenseNet-121 + BioGPT)
+│   │       ├── architecture.py           # CXRReportModel + compute_gradcam()
+│   │       ├── gradcam_utils.py          # Heatmap overlay with matplotlib
 │   │       └── preprocess.py             # Image transforms
 │   ├── weights/                          # Trained checkpoints (gitignored)
 │   │   ├── best.pt                       # LoRA checkpoint
@@ -446,15 +490,17 @@ cxr-report-generator/
 │
 ├── frontend/                             # React + Vite UI
 │   ├── src/
-│   │   ├── App.jsx                       # Main app + keyboard shortcuts
+│   │   ├── App.jsx                       # Main app + streaming + PDF
 │   │   ├── main.jsx
-│   │   ├── api.js                        # Fetch + history helpers
+│   │   ├── api.js                        # Fetch + SSE + history
 │   │   ├── index.css                     # Aurora theme
+│   │   ├── utils/
+│   │   │   └── exportPdf.js              # jsPDF report export
 │   │   └── components/
 │   │       ├── TopBar.jsx                # Header + theme toggle
 │   │       ├── Sidebar.jsx               # Report history
 │   │       ├── UploadZone.jsx            # Drag-drop upload
-│   │       ├── ReportView.jsx            # Tabbed report card
+│   │       ├── ReportView.jsx            # Tabbed report + heatmap
 │   │       ├── ConfidenceRing.jsx        # Circular gauge
 │   │       ├── Loader.jsx                # Skeleton loader
 │   │       └── Toasts.jsx                # Toast notifications
@@ -484,7 +530,9 @@ cxr-report-generator/
 │   └── screenshots/
 │       ├── main-ui.png
 │       ├── upload.png
-│       └── report.png
+│       ├── report.png
+│       ├── streaming.png
+│       └── heatmap.png
 │
 ├── README.md
 ├── LICENSE
@@ -499,10 +547,11 @@ cxr-report-generator/
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 18 · Vite · Tailwind CSS · SVG gauges · LocalStorage |
-| **Backend** | FastAPI · Uvicorn · Pydantic · Python-Multipart |
+| **Frontend** | React 18 · Vite · Tailwind CSS · SVG gauges · jsPDF · LocalStorage · SSE |
+| **Backend** | FastAPI · Uvicorn · Pydantic · StreamingResponse · Threading |
 | **ML / DL** | PyTorch 2.14 · torchvision · HuggingFace Transformers · PEFT (LoRA) |
 | **Base Models** | DenseNet-121 (ImageNet) · Microsoft BioGPT (PubMed) |
+| **Visualization** | Matplotlib (Grad-CAM heatmap) |
 | **Data** | Pandas · NumPy · Pillow |
 | **DevOps** | Git · PowerShell · Docker (planned) |
 
@@ -511,6 +560,8 @@ cxr-report-generator/
 ---
 
 ## 🗺️ Roadmap
+
+### ✅ Completed
 
 - [x] Multimodal architecture (DenseNet-121 + BioGPT)
 - [x] Full-stack web interface
@@ -521,14 +572,54 @@ cxr-report-generator/
 - [x] Advanced UI — aurora background, glassmorphism
 - [x] Tabbed report view + circular confidence gauges
 - [x] Report history sidebar + theme toggle + toasts
-- [ ] Grad-CAM attention heatmaps
-- [ ] Streaming token output (SSE)
-- [ ] Report export as PDF
+- [x] **Streaming token output (SSE)** 🆕
+- [x] **PDF report export** 🆕
+- [x] **Grad-CAM attention heatmaps** 🆕
+
+### 🚧 Planned
+
 - [ ] Train longer (20 epochs) for smoother output
 - [ ] MIMIC-CXR training (377k images)
+- [ ] BioGPT-Large (1.5B) upgrade
 - [ ] Docker Compose deployment
 - [ ] BLEU-4 / ROUGE-L evaluation suite
 - [ ] CheXbert clinical accuracy scoring
+- [ ] DICOM support
+- [ ] Multi-view fusion (PA + lateral)
+- [ ] Uncertainty quantification
+
+---
+
+## 🎯 Advanced Features in Detail
+
+### 🔴 Streaming (SSE)
+
+Instead of waiting 3–5 seconds for the full report, the model **streams tokens as they generate**. Uses `TextIteratorStreamer` from HuggingFace with a background thread, delivering tokens via Server-Sent Events.
+
+**Result:** Report feels 2× faster — users see progress immediately.
+
+### 📄 PDF Export
+
+Click **Download** to receive a professionally formatted PDF with:
+- Header with model version and latency
+- Embedded X-ray image
+- Formatted findings + impression
+- **Color-coded pathology bars** (rose / amber / cyan)
+- Medical disclaimer footer
+
+Uses `jsPDF` on the client — no backend overhead.
+
+### 🎨 Grad-CAM Heatmaps
+
+Backpropagates from the top-scoring CheXpert class to find which of the **49 spatial locations** (7×7 grid) influenced the prediction most.
+
+- **Red/orange** = high attention
+- **Yellow** = medium
+- **Blue** = low attention
+
+Overlay is generated with Matplotlib's `jet` colormap and blended with the original X-ray at 50% opacity.
+
+**Result:** Interpretability — users can see *where* the model looked.
 
 ---
 
@@ -559,6 +650,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 - **BioGPT** — Luo et al., *"BioGPT: Generative Pre-trained Transformer for Biomedical Text Generation and Mining"* (Briefings in Bioinformatics, 2022)
 - **LoRA** — Hu et al., *"LoRA: Low-Rank Adaptation of Large Language Models"* (ICLR 2022)
 - **CheXpert** — Irvin et al., Stanford ML Group (2019)
+- **Grad-CAM** — Selvaraju et al., *"Grad-CAM: Visual Explanations from Deep Networks"* (ICCV 2017)
 - **HuggingFace** — Transformers & PEFT libraries
 
 ---

@@ -193,9 +193,6 @@ docker-compose.override.yml
 # ------------------------------------------------------------
 # Project-specific
 # ------------------------------------------------------------
-# Screenshots (if too large)
-docs/screenshots/*.png
-docs/screenshots/*.jpg
 
 # Local test images
 test-images/

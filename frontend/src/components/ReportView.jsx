@@ -7,6 +7,7 @@ export default function ReportView({ result, onCopy, onDownload }) {
   const tabs = [
     { id: 'findings',   label: 'Findings'   },
     { id: 'impression', label: 'Impression' },
+    { id: 'heatmap',    label: 'Heatmap'    },
     { id: 'json',       label: 'Raw JSON'   },
   ];
 
@@ -59,6 +60,41 @@ export default function ReportView({ result, onCopy, onDownload }) {
           <p className="text-sm leading-relaxed text-slate-200 animate-fade-in font-sans">
             {result.impression || '—'}
           </p>
+        )}
+
+        {tab === 'heatmap' && (
+          <div className="animate-fade-in flex flex-col items-center gap-3 py-2">
+            {result.heatmap ? (
+              <>
+                <img
+                  src={result.heatmap}
+                  alt="Grad-CAM attention heatmap"
+                  className="rounded-xl border border-white/10 max-w-full w-80"
+                />
+                <div className="flex items-center justify-center gap-4 text-[10px] text-slate-400 mt-1">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: '#2563eb' }} />
+                    Low attention
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: '#facc15' }} />
+                    Medium
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-3 rounded-sm" style={{ background: '#dc2626' }} />
+                    High attention
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 text-center max-w-md leading-relaxed">
+                  Red zones = where the model focused most when generating this report.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 py-8 text-center">
+                Heatmap unavailable for this image.
+              </p>
+            )}
+          </div>
         )}
 
         {tab === 'json' && (
